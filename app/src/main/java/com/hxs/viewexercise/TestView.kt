@@ -1,14 +1,15 @@
 package com.hxs.viewexercise
 
+import android.animation.AnimatorSet
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.LinearInterpolator
+import android.view.animation.OvershootInterpolator
 
 /**
  * Time: 2020/7/27
@@ -35,8 +36,12 @@ class TestView : View {
     }
 
     private val path = Path()
+    private val pathMeasure = PathMeasure()
+    private var lineLength = 0f
     private var touchX = -1f
     private var touchY = -1f
+    private var isTouch = false
+    private var pressY = -1f
 
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -44,17 +49,23 @@ class TestView : View {
 
 
     override fun onDraw(canvas: Canvas?) {
-        
+
         super.onDraw(canvas)
         canvas?.run {
+
+            if (lineLength == 0f) {
+                lineLength = measuredHeight - 400f
+            }
             path.reset()
 
             path.moveTo(measuredWidth / 2f, 200f)
             if (touchX != -1f || touchY != -1f) {
                 path.lineTo(touchX, touchY)
             }
-
             path.lineTo(measuredWidth / 2f, measuredHeight - 200f)
+            pathMeasure.setPath(path, false)
+            paint.strokeWidth = lineLength / pathMeasure.length * 20f
+
 
             drawPath(path, paint)
 
@@ -63,24 +74,58 @@ class TestView : View {
 
     }
 
+    private fun isTouchLine(x: Float, y: Float): Boolean {
+        isTouch = y > 200f && y < measuredHeight - 200f
+                && x > measuredWidth / 2 - paint.strokeWidth
+                && x < measuredWidth / 2 + paint.strokeWidth
+        return isTouch
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
 
-        println("touchX:$touchX, touchY:$touchY")
-        return when (event?.action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                touchX = event.x
-                touchY = event.y
-                invalidate()
-                true
+         when (event?.action) {
+            MotionEvent.ACTION_DOWN ->{
+                if (isTouchLine(event.x, event.y)) {
+                    touchX = event.x
+                    touchY = event.y
+                    pressY = event.y
+                    return true
+                }
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (isTouch) {
+                    touchX = event.x
+                    touchY = event.y
+                    invalidate()
+                    return true
+                }
             }
             MotionEvent.ACTION_UP -> {
-                touchX = -1f
-                touchY = -1f
-                invalidate()
-                true
+                if (isTouch) {
+                    val set = AnimatorSet()
+                    val animatorX = ValueAnimator.ofFloat(touchX, measuredHeight / 2f)
+                    animatorX.interpolator = OvershootInterpolator()
+                    animatorX.addUpdateListener {
+                        touchX = it.animatedValue as Float
+                        invalidate()
+                    }
+
+                    val animatorY = ValueAnimator.ofFloat(touchY, pressY)
+                    animatorY.interpolator = LinearInterpolator()
+                    animatorY.addUpdateListener {
+                        touchY = it.animatedValue as Float
+                    }
+                    set.playTogether(animatorX, animatorY)
+                    set.start()
+
+//                    animatorX.start()
+//                    invalidate()
+                    isTouch = false
+                    return true
+                }
             }
-            else -> super.onTouchEvent(event)
         }
+        return super.onTouchEvent(event)
     }
 }
