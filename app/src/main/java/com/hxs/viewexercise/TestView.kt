@@ -1,11 +1,13 @@
 package com.hxs.viewexercise
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 
 /**
@@ -25,34 +27,60 @@ class TestView : View {
 
     private var paint: Paint = Paint().apply {
         color = Color.BLACK
-        strokeWidth = 10f
+        strokeWidth = 20f
+        strokeCap = Paint.Cap.ROUND
         style = Paint.Style.STROKE
+        strokeJoin = Paint.Join.ROUND
         flags = Paint.ANTI_ALIAS_FLAG
     }
 
     private val path = Path()
-    private val path1 = Path()
-    private val path2 = Path()
-    private val path3 = Path()
-    private val path4 = Path()
+    private var touchX = -1f
+    private var touchY = -1f
 
-    private val padding: Float = 200f
+    init {
+        setLayerType(LAYER_TYPE_HARDWARE, null)
+    }
 
 
     override fun onDraw(canvas: Canvas?) {
+        
         super.onDraw(canvas)
         canvas?.run {
-            drawColor(Color.BLUE)
-            translate(measuredWidth / 2f, measuredHeight / 2f)
-            clipRect(-400f, -400f, 400f, 400f)
+            path.reset()
 
-            save()
-            drawColor(Color.CYAN)
-//            scale(0.5f, 0.5f)
-//            drawRect(-400f, -400f, 400f, 400f, paint)
+            path.moveTo(measuredWidth / 2f, 200f)
+            if (touchX != -1f || touchY != -1f) {
+                path.lineTo(touchX, touchY)
+            }
+
+            path.lineTo(measuredWidth / 2f, measuredHeight - 200f)
+
+            drawPath(path, paint)
 
         }
 
 
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+
+        println("touchX:$touchX, touchY:$touchY")
+        return when (event?.action) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                touchX = event.x
+                touchY = event.y
+                invalidate()
+                true
+            }
+            MotionEvent.ACTION_UP -> {
+                touchX = -1f
+                touchY = -1f
+                invalidate()
+                true
+            }
+            else -> super.onTouchEvent(event)
+        }
     }
 }
