@@ -10,13 +10,12 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import kotlin.random.Random
 
-
 /**
- * Time: 2020/7/27
+ * Time: 2020/8/1
  * Author: Mightted
- * Description:
+ * Description: 会动的波浪view
  */
-class TestView : View {
+class WaveView: View {
 
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)

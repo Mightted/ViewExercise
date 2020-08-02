@@ -10,6 +10,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        testView.animator()
 //        testView.animate(2000)
 //        testView.changeColor(Color.GREEN)
     }
