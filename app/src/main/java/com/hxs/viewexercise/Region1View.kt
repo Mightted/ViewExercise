@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 
+// 具有横向开屏效果的ImageView
 class Region1View : AppCompatImageView {
 
     constructor(context: Context?) : super(context)
