@@ -46,7 +46,7 @@ class NightSkyView : View {
         canvas?.drawBitmap(bgBitmap, null, dstRect, paint)
 
 
-        nightSky?.onDraw(canvas)
+        nightSky?.onDrawWithUpdate(canvas)
 
     }
 
@@ -92,7 +92,7 @@ class NightSkyView : View {
     fun play() {
         post {
             nightSky = NightSky(width.toFloat(), height * 0.5f)
-            nightSky?.initData()
+//            nightSky?.initData()
             animator = animator()
             animator.start()
         }

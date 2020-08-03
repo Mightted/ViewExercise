@@ -5,6 +5,9 @@ import android.animation.ValueAnimator
 import android.graphics.*
 import android.text.TextPaint
 import androidx.core.graphics.ColorUtils
+import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 class NightSky(private val width: Float, private val height: Float) {
@@ -32,20 +35,61 @@ class NightSky(private val width: Float, private val height: Float) {
 
     fun pause() {
         stars.forEach {
-            it.set.resume()
+            it.set.pause()
+
         }
     }
 
     fun resume() {
         stars.forEach {
-            it.set.pause()
+            it.set.resume()
         }
     }
 
+    @ObsoleteCoroutinesApi
+    private val counterContext = newSingleThreadContext("CounterContext")
+    @ObsoleteCoroutinesApi
+    suspend fun updateMeteors() = withContext(counterContext) {
+        meteors.iterator().let {
+            while (it.hasNext()) {
+                it.next().run {
+                    if (!isShow) {
+                        it.remove()
+                    }
+                }
+            }
+        }
+    }
 
     fun onDraw(canvas: Canvas?) {
 
 
+        println("当前线程名:${Thread.currentThread().name}")
+        meteors.forEach {
+            if (it.isShow) {
+                it.draw(canvas, paint)
+            }
+        }
+//        meteors.iterator().let {
+//            while (it.hasNext()) {
+//                it.next().run {
+//                    if (isShow) {
+//                        draw(canvas, paint)
+//                    } else {
+//                        it.remove()
+//                    }
+//                }
+//            }
+//        }
+
+        stars.forEach {
+            it.draw(canvas, textPaint)
+        }
+
+    }
+
+
+    fun onDrawWithUpdate(canvas: Canvas?) {
         meteors.iterator().let {
             while (it.hasNext()) {
                 it.next().run {
@@ -61,7 +105,6 @@ class NightSky(private val width: Float, private val height: Float) {
         stars.forEach {
             it.draw(canvas, textPaint)
         }
-
     }
 
 
@@ -76,7 +119,7 @@ class NightSky(private val width: Float, private val height: Float) {
     }
 
 
-    fun initData() {
+    init {
         meteors.add(
             Meteor(
                 floatArrayOf(width - 200f, 200f),

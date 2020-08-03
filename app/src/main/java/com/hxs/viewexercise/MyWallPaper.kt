@@ -8,6 +8,10 @@ import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
 import android.view.animation.LinearInterpolator
 import androidx.core.animation.addListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.launch
 
 class MyWallPaper : WallpaperService() {
 
@@ -16,6 +20,7 @@ class MyWallPaper : WallpaperService() {
     }
 
 
+    @ObsoleteCoroutinesApi
     inner class MyEngine : Engine() {
 
 
@@ -27,6 +32,15 @@ class MyWallPaper : WallpaperService() {
         private lateinit var bgRect: Rect
         private lateinit var nightSky: NightSky
         private val animator = initAnimator()
+
+        private val job = CoroutineScope(Dispatchers.Default).launch {
+            val canvas = surfaceHolder.lockCanvas() ?: return@launch
+            canvas.drawBitmap(bitmap, null, bgRect, paint)
+            nightSky.updateMeteors()
+            nightSky.onDraw(canvas)
+
+            surfaceHolder.unlockCanvasAndPost(canvas)
+        }
 
 
         //        override fun onSurfaceDestroyed(holder: SurfaceHolder?) {
@@ -40,7 +54,7 @@ class MyWallPaper : WallpaperService() {
                 nightSky.resume()
             } else {
                 animator.pause()
-                nightSky.resume()
+                nightSky.pause()
             }
         }
 
@@ -57,12 +71,11 @@ class MyWallPaper : WallpaperService() {
         }
 
         private fun updateFrame() {
-            val canvas = surfaceHolder.lockCanvas() ?: return
 
-            canvas.drawBitmap(bitmap, null, bgRect, paint)
-            nightSky.onDraw(canvas)
 
-            surfaceHolder.unlockCanvasAndPost(canvas)
+
+            job.start()
+
         }
 
 
