@@ -10,8 +10,9 @@ import android.view.animation.LinearInterpolator
 import androidx.core.animation.addListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlin.random.Random
 
 class MyWallPaper : WallpaperService() {
 
@@ -20,7 +21,6 @@ class MyWallPaper : WallpaperService() {
     }
 
 
-    @ObsoleteCoroutinesApi
     inner class MyEngine : Engine() {
 
 
@@ -32,21 +32,8 @@ class MyWallPaper : WallpaperService() {
         private lateinit var bgRect: Rect
         private lateinit var nightSky: NightSky
         private val animator = initAnimator()
+        private val mutex = Mutex()
 
-        private val job = CoroutineScope(Dispatchers.Default).launch {
-            val canvas = surfaceHolder.lockCanvas() ?: return@launch
-            canvas.drawBitmap(bitmap, null, bgRect, paint)
-            nightSky.updateMeteors()
-            nightSky.onDraw(canvas)
-
-            surfaceHolder.unlockCanvasAndPost(canvas)
-        }
-
-
-        //        override fun onSurfaceDestroyed(holder: SurfaceHolder?) {
-//            super.onSurfaceDestroyed(holder)
-//        }
-//
         override fun onVisibilityChanged(visible: Boolean) {
             super.onVisibilityChanged(visible)
             if (visible || animator.isPaused) {
@@ -71,11 +58,16 @@ class MyWallPaper : WallpaperService() {
         }
 
         private fun updateFrame() {
-
-
-
-            job.start()
-
+            if (!isVisible) {
+                return
+            }
+            CoroutineScope(Dispatchers.Default).launch {
+                surfaceHolder.lockCanvas()?.run {
+                    drawBitmap(bitmap, null, bgRect, paint)
+                    nightSky.onDraw(this, mutex)
+                    surfaceHolder.unlockCanvasAndPost(this)
+                }
+            }
         }
 
 
@@ -98,7 +90,11 @@ class MyWallPaper : WallpaperService() {
                 }
                 addListener(onRepeat = {
                     frame = 0
-                    nightSky.addMeteor()
+                    nightSky.updateMeteors()
+
+                    if (Random.nextInt(10) % 3 == 0) {
+                        nightSky.addMeteor()
+                    }
                 })
 
 

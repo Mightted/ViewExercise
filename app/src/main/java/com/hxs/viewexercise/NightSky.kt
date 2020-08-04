@@ -5,19 +5,19 @@ import android.animation.ValueAnimator
 import android.graphics.*
 import android.text.TextPaint
 import androidx.core.graphics.ColorUtils
-import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.newSingleThreadContext
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.random.Random
 
 class NightSky(private val width: Float, private val height: Float) {
 
 
-    private val meteors = mutableListOf<Meteor>()
+    /**
+     * 用于并发绘制中，保持同步
+     */
+    private val meteors = CopyOnWriteArrayList<Meteor>()
     private val stars = mutableListOf<Star>()
-
-    private var frame = 0
-    private var frameUnit = 1000 / 60f
 
     private val paint = Paint().apply {
         color = Color.WHITE
@@ -36,7 +36,6 @@ class NightSky(private val width: Float, private val height: Float) {
     fun pause() {
         stars.forEach {
             it.set.pause()
-
         }
     }
 
@@ -46,41 +45,21 @@ class NightSky(private val width: Float, private val height: Float) {
         }
     }
 
-    @ObsoleteCoroutinesApi
-    private val counterContext = newSingleThreadContext("CounterContext")
-    @ObsoleteCoroutinesApi
-    suspend fun updateMeteors() = withContext(counterContext) {
-        meteors.iterator().let {
-            while (it.hasNext()) {
-                it.next().run {
-                    if (!isShow) {
-                        it.remove()
-                    }
-                }
+    fun updateMeteors() {
+        meteors.forEach {
+            if (!it.isShow) {
+                meteors.remove(it)
             }
         }
     }
 
+
     fun onDraw(canvas: Canvas?) {
-
-
-        println("当前线程名:${Thread.currentThread().name}")
         meteors.forEach {
             if (it.isShow) {
                 it.draw(canvas, paint)
             }
         }
-//        meteors.iterator().let {
-//            while (it.hasNext()) {
-//                it.next().run {
-//                    if (isShow) {
-//                        draw(canvas, paint)
-//                    } else {
-//                        it.remove()
-//                    }
-//                }
-//            }
-//        }
 
         stars.forEach {
             it.draw(canvas, textPaint)
@@ -88,17 +67,10 @@ class NightSky(private val width: Float, private val height: Float) {
 
     }
 
-
-    fun onDrawWithUpdate(canvas: Canvas?) {
-        meteors.iterator().let {
-            while (it.hasNext()) {
-                it.next().run {
-                    if (isShow) {
-                        draw(canvas, paint)
-                    } else {
-                        it.remove()
-                    }
-                }
+    suspend fun onDraw(canvas: Canvas?, mutex: Mutex) {
+        meteors.forEach {
+            if (it.isShow) {
+                it.draw(canvas, paint, mutex)
             }
         }
 
@@ -120,35 +92,18 @@ class NightSky(private val width: Float, private val height: Float) {
 
 
     init {
-        meteors.add(
-            Meteor(
-                floatArrayOf(width - 200f, 200f),
-                floatArrayOf(200f, 0.8f * height)
-            )
-        )
-        meteors.add(Meteor(width, height))
+//        meteors.add(
+//            Meteor(
+//                floatArrayOf(width - 200f, 200f),
+//                floatArrayOf(200f, 0.8f * height)
+//            )
+//        )
+//        meteors.add(Meteor(width, height))
 
         stars.add(Star(floatArrayOf(width - 200f, 300f)))
         stars.add(Star(floatArrayOf(width - 300f, 400f)))
         stars.add(Star(floatArrayOf(width / 2f, 500f)))
         stars.add(Star(floatArrayOf(400f, 200f)))
-
-//        val animator = ValueAnimator.ofInt(0, 999)
-//        animator.duration = 1000
-//        animator.interpolator = LinearInterpolator()
-//        animator.repeatCount = ValueAnimator.INFINITE
-//        animator.addUpdateListener {
-//            if ((it.animatedValue as Int) < frameUnit) {
-//                frame = 0
-//                meteors.add(Meteor(width, height))
-//            }
-//            if (it.animatedValue as Int / frameUnit > frame) {
-//                frame++
-//            } else {
-//                println("${it.animatedValue as Int / frameUnit} : $frame")
-//            }
-//        }
-//        animator.start()
 
 
     }
@@ -183,8 +138,6 @@ class NightSky(private val width: Float, private val height: Float) {
         }
 
 
-        //        private var lineStart = FloatArray(2)
-//        private var lineEnd = FloatArray(2)
         private var lineStart = 0f
         private var lineEnd = 0f
         private val startPoint = FloatArray(2)
@@ -264,33 +217,45 @@ class NightSky(private val width: Float, private val height: Float) {
          * 更新着色器
          */
         private fun updateShader(
-            startPoints: FloatArray = endPoint,
-            endPoints: FloatArray = startPoint,
-            sColor: Int = startColor,
-            eColor: Int = endColor
+            startPoints: FloatArray = endPoint, endPoints: FloatArray = startPoint,
+            sColor: Int = startColor, eColor: Int = endColor
         ) {
             linearGradient = null
             linearGradient = LinearGradient(
-                startPoints[0],
-                startPoints[1],
-                endPoints[0],
-                endPoints[1],
-                sColor,
-                eColor,
+                startPoints[0], startPoints[1],
+                endPoints[0], endPoints[1],
+                sColor, eColor,
                 Shader.TileMode.CLAMP
             )
         }
 
 
+        suspend fun draw(canvas: Canvas?, paint: Paint, mutex: Mutex) {
+
+            doDraw(canvas, paint)
+            mutex.withLock {
+                translate = (translate + speed).coerceAtMost(pathMeasure.length)
+                isShow = !(translate == 0f || translate == pathMeasure.length)
+            }
+        }
+
+
         fun draw(canvas: Canvas?, paint: Paint) {
+            doDraw(canvas, paint)
+            translate = (translate + speed).coerceAtMost(pathMeasure.length)
+            isShow = !(translate == 0f || translate == pathMeasure.length)
+        }
+
+        /**
+         * 绘制流星轨迹，不同的时间段，尾巴长度不同
+         */
+        private fun doDraw(canvas: Canvas?, paint: Paint) {
 
             if (pathMeasure.length == 0f || !isShow) {
                 return
             }
 
             canvas?.run {
-
-
                 movePath.reset()
 
                 lineEnd = translate.coerceAtMost(pathMeasure.length)
@@ -305,13 +270,7 @@ class NightSky(private val width: Float, private val height: Float) {
                 updateShader()
                 paint.shader = linearGradient
 
-                translate = (translate + speed).coerceAtMost(pathMeasure.length)
-                isShow = !(translate == 0f || translate == pathMeasure.length)
-
-
                 drawPath(movePath, paint)
-
-
             }
         }
 
@@ -325,10 +284,9 @@ class NightSky(private val width: Float, private val height: Float) {
         var set = AnimatorSet()
 
         init {
+            // 星光透明度变化
             val animator1 = ValueAnimator.ofArgb(
-                (0x00FFFFFF).toInt(),
-                (0xFFFFFFFF).toInt(),
-                (0x00FFFFFF).toInt()
+                (0x00FFFFFF).toInt(), (0xFFFFFFFF).toInt(), (0x00FFFFFF).toInt()
             ).apply {
                 repeatCount = ValueAnimator.INFINITE
                 addUpdateListener {
@@ -336,6 +294,7 @@ class NightSky(private val width: Float, private val height: Float) {
                 }
             }
 
+            // 星光大小变化
             val animator2 = ValueAnimator
                 .ofFloat(0f, 10f + Random.nextInt(10), 0f).apply {
                     repeatCount = ValueAnimator.INFINITE

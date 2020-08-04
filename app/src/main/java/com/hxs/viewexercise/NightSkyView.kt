@@ -3,7 +3,6 @@ package com.hxs.viewexercise
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
-import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.LinearInterpolator
@@ -39,14 +38,16 @@ class NightSkyView : View {
         style = Paint.Style.STROKE
     }
 
+    init {
+        setLayerType(LAYER_TYPE_HARDWARE, null)
+    }
+
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         dstRect.set(0, 0, width, height)
         canvas?.drawBitmap(bgBitmap, null, dstRect, paint)
-
-
-        nightSky?.onDrawWithUpdate(canvas)
+        nightSky?.onDraw(canvas)
 
     }
 
@@ -83,6 +84,7 @@ class NightSkyView : View {
 
             addListener(onRepeat = {
                 frame = 0
+                nightSky?.updateMeteors()
                 nightSky?.addMeteor()
             })
         }
@@ -92,7 +94,6 @@ class NightSkyView : View {
     fun play() {
         post {
             nightSky = NightSky(width.toFloat(), height * 0.5f)
-//            nightSky?.initData()
             animator = animator()
             animator.start()
         }
@@ -102,7 +103,6 @@ class NightSkyView : View {
         if (nightSky != null) {
             animator.resume()
         }
-
     }
 
     fun pause() {
