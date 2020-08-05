@@ -1,4 +1,4 @@
-package com.hxs.viewexercise
+package com.hxs.viewexercise.drag
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -6,16 +6,18 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import com.hxs.viewexercise.BezierUtil
 import kotlin.math.PI
 import kotlin.math.asin
-
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 /**
- * Time: 2020/7/27
+ * Time: 2020/8/5
  * Author: Mightted
  * Description:
  */
-class TestView : View {
+class Drag2View :View {
 
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
@@ -27,10 +29,11 @@ class TestView : View {
 
     private var paint: Paint = Paint().apply {
 
-        strokeWidth = 5f
+        strokeWidth = 10f
         strokeCap = Paint.Cap.ROUND
         color = Color.GREEN
-        style = Paint.Style.STROKE
+        pathEffect = CornerPathEffect(50f)
+        style = Paint.Style.FILL_AND_STROKE
         strokeJoin = Paint.Join.ROUND
         flags = Paint.ANTI_ALIAS_FLAG
     }
@@ -43,7 +46,7 @@ class TestView : View {
 
     private val translatePoint = FloatArray(2)
     private val centerLinePoint = FloatArray(2)
-    private val radius = 200f
+    private val radius = 100f
     private val srcPoint1 = FloatArray(2)
     private val srcPoint2 = FloatArray(2)
     private val dstPoint1 = FloatArray(2)
@@ -74,23 +77,30 @@ class TestView : View {
         canvas?.run {
 
             path.reset()
-            BezierUtil.addPath(path, centerPoint[0], centerPoint[1], radius)
-            if (isDrag) {
+            if (!isDrag) {
+                BezierUtil.addPath(
+                    path,
+                    centerPoint[0],
+                    centerPoint[1],
+                    radius
+                )
+            } else {
                 //                path2.reset()
                 srcPath.reset()
                 srcMatrix.reset()
                 BezierUtil.addPath(
                     srcPath,
-                    translatePoint[0],
-                    translatePoint[1],
-                    radius
+                    centerPoint[0],
+                    centerPoint[1],
+                    updateRadius(),
+                    getLength(centerPoint, translatePoint)
                 )
-//                val degress: Float = (Math.atan2(
-//                    (translatePoint[1] - centerPoint[1]).toDouble(),
-//                    (translatePoint[0] - centerPoint[0]).toDouble()
-//                ) / PI * 180f).toFloat()
-//
-//                srcMatrix.setRotate(degress, centerPoint[0], centerPoint[1])
+                val degress: Float = (Math.atan2(
+                    (translatePoint[1] - centerPoint[1]).toDouble(),
+                    (translatePoint[0] - centerPoint[0]).toDouble()
+                ) / PI * 180f).toFloat()
+
+                srcMatrix.setRotate(degress, centerPoint[0], centerPoint[1])
                 path.addPath(srcPath, srcMatrix)
 
 //                path.op(path2, Path.Op.UNION)
@@ -121,26 +131,15 @@ class TestView : View {
                 dstPoint2[0] = translatePoint[0] - Math.cos(radians[0]).toFloat() * radius
                 dstPoint2[1] = translatePoint[1] + Math.sin(radians[0]).toFloat() * radius
 
-                path.moveTo(srcPoint1[0], srcPoint1[1])
-                path.quadTo(centerLinePoint[0], centerLinePoint[1], dstPoint1[0], dstPoint1[1])
-                path.moveTo(srcPoint2[0], srcPoint2[1])
-                path.quadTo(centerLinePoint[0], centerLinePoint[1], dstPoint2[0], dstPoint2[1])
+//                path.moveTo(srcPoint1[0], srcPoint1[1])
+//                path.quadTo(centerLinePoint[0], centerLinePoint[1], dstPoint1[0], dstPoint1[1])
+//                path.moveTo(srcPoint2[0], srcPoint2[1])
+//                path.quadTo(centerLinePoint[0], centerLinePoint[1], dstPoint2[0], dstPoint2[1])
 
 
                 paint.color = Color.CYAN
                 drawPoints(srcPoint1, paint)
                 drawPoints(dstPoint1, paint)
-                drawLine(
-                    centerPoint[0],
-                    centerPoint[1],
-                    translatePoint[0],
-                    translatePoint[1],
-                    paint
-                )
-                drawLine(srcPoint1[0], srcPoint1[1], centerLinePoint[0], centerLinePoint[1], paint)
-                drawLine(dstPoint1[0], dstPoint1[1], centerLinePoint[0], centerLinePoint[1], paint)
-                drawLine(srcPoint2[0], srcPoint2[1], centerLinePoint[0], centerLinePoint[1], paint)
-                drawLine(dstPoint2[0], dstPoint2[1], centerLinePoint[0], centerLinePoint[1], paint)
 //                path.lineTo(translateX, translateY)
             }
             paint.color = Color.GREEN
@@ -151,7 +150,7 @@ class TestView : View {
 
 
     private fun updateRadian(radian: DoubleArray) {
-        val radian1 = asin(radius / Geometry.length(centerPoint, centerLinePoint, 0, 0).toDouble())
+        val radian1 = asin(radius / getLength(centerPoint, translatePoint).toDouble())
         //                    (Math.sqrt(
 //                    Math.pow((translatePoint[1] - centerPoint[1]).toDouble(), 2.0) +
 //                            Math.pow((translatePoint[0] - centerPoint[0]).toDouble(), 2.0)
@@ -161,8 +160,8 @@ class TestView : View {
                 (translatePoint[1] - centerPoint[1]).toDouble(),
                 (translatePoint[0] - centerPoint[0]).toDouble()
             )
-        radian[0] = radian2 - radian1
-        radian[1] = radian2 + radian1
+        radian[0] = (radian1 - radian2)
+        radian[1] = (radian1 - PI / 2 + radian2)
 
 
     }
@@ -201,11 +200,18 @@ class TestView : View {
         }
     }
 
-//    private fun getLength(src: FloatArray, dst: FloatArray): Float {
-//        return sqrt(
-//            (dst[1] - src[1]).toDouble().pow(2.0) + (dst[0] - src[0]).toDouble().pow(2.0)
-//        ).toFloat()
-//    }
+    private fun updateRadius(
+        rawRadius: Float = radius,
+        offset: Float = getLength(centerPoint, translatePoint)
+    ): Float {
+        return ((1 - ((offset / rawRadius) - 1) * 0.1f) * rawRadius).coerceAtLeast(10f)
+    }
+
+    private fun getLength(src: FloatArray, dst: FloatArray): Float {
+        return sqrt(
+            (dst[1] - src[1]).toDouble().pow(2.0) + (dst[0] - src[0]).toDouble().pow(2.0)
+        ).toFloat()
+    }
 
     private fun isInCircle(x: Float, y: Float): Boolean {
         return x in centerPoint[0].let { it - radius - paint.strokeWidth..it + radius + paint.strokeWidth }

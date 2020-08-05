@@ -9,8 +9,8 @@ object BezierUtil {
 
     private val circleRatio = 4 / 3f * tan(PI / 8).toFloat()
 
-    fun addPath(path: Path, x: Float, y: Float, rawRadius: Float, offset: Float = rawRadius) {
-        val radius = ((1 - ((offset / rawRadius) - 1) * 0.1f) * rawRadius).coerceAtLeast(10f)
+    fun addPath(path: Path, x: Float, y: Float, radius: Float, offset: Float = radius) {
+//        val radius = ((1 - ((offset / rawRadius) - 1) * 0.1f) * rawRadius).coerceAtLeast(10f)
         path.moveTo(x - radius, y)
 
         // 左上角

@@ -15,6 +15,7 @@ import kotlin.math.sqrt
 /**
  * 拖拽view
  * 手指接触点比较小
+ * 拖拽物体位置不会移动
  */
 class DragView : View {
 
@@ -91,7 +92,7 @@ class DragView : View {
                     srcPath,
                     centerPoint[0],
                     centerPoint[1],
-                    radius,
+                    updateRadius(),
                     getLength(centerPoint, translatePoint)
                 )
                 val degress: Float = (Math.atan2(
@@ -197,6 +198,13 @@ class DragView : View {
                 super.onTouchEvent(event)
             }
         }
+    }
+
+    private fun updateRadius(
+        rawRadius: Float = radius,
+        offset: Float = getLength(centerPoint, translatePoint)
+    ): Float {
+        return ((1 - ((offset / rawRadius) - 1) * 0.1f) * rawRadius).coerceAtLeast(10f)
     }
 
     private fun getLength(src: FloatArray, dst: FloatArray): Float {

@@ -1,5 +1,6 @@
 package com.hxs.viewexercise
 
+import kotlin.math.acos
 import kotlin.math.sqrt
 
 object Geometry {
@@ -11,13 +12,22 @@ object Geometry {
      * 获得两点间的距离
      */
     fun length(src: FloatArray, dst: FloatArray, offset1: Int, offset2: Int): Float {
-        val xValue = (dst[offset1] - src[offset2])
-        val yValue = (dst[offset1 + 1] - src[offset2 + 1])
-        return sqrt(xValue * xValue + yValue * yValue)
+        return length(dst[offset1] - src[offset2], dst[offset1 + 1] - src[offset2 + 1])
+//        val xValue = (dst[offset1] - src[offset2])
+//        val yValue = (dst[offset1 + 1] - src[offset2 + 1])
+//        return sqrt(xValue * xValue + yValue * yValue)
     }
 
-    fun length(vector:FloatArray, offset: Int) {
 
+    /**
+     * 获取向量的长度
+     */
+    fun length(vector: FloatArray, offset: Int = 0): Float {
+        return length(vector[offset], vector[offset + 1])
+    }
+
+    fun length(x: Float, y: Float): Float {
+        return sqrt(x * x + y * y)
     }
 
     /**
@@ -36,7 +46,7 @@ object Geometry {
     ): Float {
         getVector(temp, start1, end1)
         getVector(temp, start2, end2, 2)
-        dotProduct(temp, temp, 0, 2) /
+        return acos(dotProduct(temp, temp, 0, 2) / length(temp) * length(temp, 2))
 
 
     }
