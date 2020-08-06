@@ -11,7 +11,7 @@ object Geometry {
     /**
      * 获得两点间的距离
      */
-    fun length(src: FloatArray, dst: FloatArray, offset1: Int, offset2: Int): Float {
+    fun length(src: FloatArray, dst: FloatArray, offset1: Int = 0, offset2: Int = 0): Float {
         return length(dst[offset1] - src[offset2], dst[offset1 + 1] - src[offset2 + 1])
 //        val xValue = (dst[offset1] - src[offset2])
 //        val yValue = (dst[offset1 + 1] - src[offset2 + 1])

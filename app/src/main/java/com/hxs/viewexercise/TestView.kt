@@ -1,13 +1,18 @@
 package com.hxs.viewexercise
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import kotlin.math.PI
-import kotlin.math.asin
+import android.view.animation.OvershootInterpolator
+import androidx.core.animation.addListener
+import kotlin.math.*
 
 
 /**
@@ -25,14 +30,31 @@ class TestView : View {
         defStyleAttr
     )
 
+    private val VALUE_RAW_RADIUS = 80f
+    private val VALUE_DRAG_RADIUS = 20f
+    private val VALUE_PAINT_WIDTH = 5f
+
     private var paint: Paint = Paint().apply {
 
-        strokeWidth = 5f
+        strokeWidth = VALUE_PAINT_WIDTH
         strokeCap = Paint.Cap.ROUND
         color = Color.GREEN
-        style = Paint.Style.STROKE
+        style = Paint.Style.FILL_AND_STROKE
         strokeJoin = Paint.Join.ROUND
         flags = Paint.ANTI_ALIAS_FLAG
+    }
+
+    private val reboundAnim = ValueAnimator.ofFloat(0f,1f).apply {
+        interpolator = OvershootInterpolator()
+        addUpdateListener {
+            translatePoint[0] = upPoint[0] + (centerPoint[0] - upPoint[0]) * it.animatedValue as Float
+            translatePoint[1] = upPoint[1] + (centerPoint[1] - upPoint[1]) * it.animatedValue as Float
+            println("${translatePoint[0]}:${translatePoint[1]}")
+            invalidate()
+        }
+        addListener {
+            isDrag = false
+        }
     }
 
     private val centerPoint: FloatArray
@@ -43,17 +65,18 @@ class TestView : View {
 
     private val translatePoint = FloatArray(2)
     private val centerLinePoint = FloatArray(2)
-    private val radius = 200f
+    private val radius = VALUE_RAW_RADIUS
+    private var centerRadius = VALUE_DRAG_RADIUS
     private val srcPoint1 = FloatArray(2)
     private val srcPoint2 = FloatArray(2)
     private val dstPoint1 = FloatArray(2)
     private val dstPoint2 = FloatArray(2)
-    private val radians = DoubleArray(2)
-    private var isDrag = false
+    private val upPoint = FloatArray(2)
+    private val pressedPoint = FloatArray(2)
+    private var isDrag = false // 是否拖动圆
 
     private val path = Path()
-    private val srcPath = Path()
-    private val srcMatrix = Matrix()
+    private val dragPath = Path()
 
     init {
 
@@ -61,8 +84,6 @@ class TestView : View {
         post {
             translatePoint[0] = centerPoint[0]
             translatePoint[1] = centerPoint[1]
-//            translateX = centerX
-//            translateY = centerY
             invalidate()
         }
     }
@@ -71,100 +92,91 @@ class TestView : View {
     override fun onDraw(canvas: Canvas?) {
 
         super.onDraw(canvas)
+
         canvas?.run {
-
             path.reset()
-            BezierUtil.addPath(path, centerPoint[0], centerPoint[1], radius)
+            // 绘制固定点部分的圆
+            BezierUtil.addPath(path, centerPoint[0], centerPoint[1], centerRadius)
             if (isDrag) {
-                //                path2.reset()
-                srcPath.reset()
-                srcMatrix.reset()
-                BezierUtil.addPath(
-                    srcPath,
-                    translatePoint[0],
-                    translatePoint[1],
-                    radius
-                )
-//                val degress: Float = (Math.atan2(
-//                    (translatePoint[1] - centerPoint[1]).toDouble(),
-//                    (translatePoint[0] - centerPoint[0]).toDouble()
-//                ) / PI * 180f).toFloat()
-//
-//                srcMatrix.setRotate(degress, centerPoint[0], centerPoint[1])
-                path.addPath(srcPath, srcMatrix)
+                // 绘制拖拽部分的圆
+                BezierUtil.addPath(path, translatePoint[0], translatePoint[1], radius)
 
-//                path.op(path2, Path.Op.UNION)
+                updateCenterLinePoint()
+                updateRadian()
 
-                centerLinePoint[0] = (centerPoint[0] + translatePoint[0]) / 2
-                centerLinePoint[1] = (centerPoint[1] + translatePoint[1]) / 2
-//                val radian =
-//                    Math.asin(
-//                        radius / (Math.sqrt(
-//                            Math.pow((translatePoint[1] - centerPoint[1]).toDouble(), 2.0) +
-//                                    Math.pow((translatePoint[0] - centerPoint[0]).toDouble(), 2.0)
-//                        ))
-//                    )
-//                val radian =
-//                    Math.atan2(
-//                        (translatePoint[1] - centerPoint[1]).toDouble(),
-//                        (translatePoint[0] - centerPoint[0]).toDouble()
-//                    )
-
-                updateRadian(radians)
-                srcPoint1[0] = centerPoint[0] + Math.cos(radians[0]).toFloat() * radius
-                srcPoint1[1] = centerPoint[1] - Math.sin(radians[0]).toFloat() * radius
-                srcPoint2[0] = centerPoint[0] - Math.sin(radians[1]).toFloat() * radius
-                srcPoint2[1] = centerPoint[1] + Math.cos(radians[1]).toFloat() * radius
-
-                dstPoint1[0] = translatePoint[0] + Math.sin(radians[1]).toFloat() * radius
-                dstPoint1[1] = translatePoint[1] - Math.cos(radians[1]).toFloat() * radius
-                dstPoint2[0] = translatePoint[0] - Math.cos(radians[0]).toFloat() * radius
-                dstPoint2[1] = translatePoint[1] + Math.sin(radians[0]).toFloat() * radius
-
-                path.moveTo(srcPoint1[0], srcPoint1[1])
-                path.quadTo(centerLinePoint[0], centerLinePoint[1], dstPoint1[0], dstPoint1[1])
-                path.moveTo(srcPoint2[0], srcPoint2[1])
-                path.quadTo(centerLinePoint[0], centerLinePoint[1], dstPoint2[0], dstPoint2[1])
-
-
-                paint.color = Color.CYAN
-                drawPoints(srcPoint1, paint)
-                drawPoints(dstPoint1, paint)
-                drawLine(
-                    centerPoint[0],
-                    centerPoint[1],
-                    translatePoint[0],
-                    translatePoint[1],
-                    paint
-                )
-                drawLine(srcPoint1[0], srcPoint1[1], centerLinePoint[0], centerLinePoint[1], paint)
-                drawLine(dstPoint1[0], dstPoint1[1], centerLinePoint[0], centerLinePoint[1], paint)
-                drawLine(srcPoint2[0], srcPoint2[1], centerLinePoint[0], centerLinePoint[1], paint)
-                drawLine(dstPoint2[0], dstPoint2[1], centerLinePoint[0], centerLinePoint[1], paint)
-//                path.lineTo(translateX, translateY)
+                // 绘制中间拉伸的部分
+                dragPath.run {
+                    reset()
+                    moveTo(srcPoint1[0], srcPoint1[1])
+                    quadTo(centerLinePoint[0], centerLinePoint[1], dstPoint1[0], dstPoint1[1])
+                    lineTo(dstPoint2[0], dstPoint2[1])
+                    quadTo(centerLinePoint[0], centerLinePoint[1], srcPoint2[0], srcPoint2[1])
+                    close()
+                }
+                path.addPath(dragPath)
+//                drawSupportLine(this)
             }
+
             paint.color = Color.GREEN
             drawPath(path, paint)
-
         }
     }
 
+    /**
+     * 更新中点位置
+     * 中点并不总是在两圆点之间，半径的不同会有差异
+     */
+    private fun updateCenterLinePoint() {
+        val ratio = (Geometry.length(centerPoint, translatePoint)).let { length ->
+            ((length - radius - centerRadius) / 2 + centerRadius) / length
+        }
+        centerLinePoint[0] = centerPoint[0] + (translatePoint[0] - centerPoint[0]) * ratio
+        centerLinePoint[1] = centerPoint[1] + (translatePoint[1] - centerPoint[1]) * ratio
+    }
 
-    private fun updateRadian(radian: DoubleArray) {
-        val radian1 = asin(radius / Geometry.length(centerPoint, centerLinePoint, 0, 0).toDouble())
-        //                    (Math.sqrt(
-//                    Math.pow((translatePoint[1] - centerPoint[1]).toDouble(), 2.0) +
-//                            Math.pow((translatePoint[0] - centerPoint[0]).toDouble(), 2.0)
-//                ) / 2)
-        val radian2 =
-            Math.atan2(
+    /**
+     * 更新拉伸部分与两个圆的连接点
+     * 选择合适的点很重要，否则线会跟圆内重合
+     */
+    private fun updateRadian() {
+
+        // 指向原圆的弧度
+        val baseRadian =
+            atan2(
                 (translatePoint[1] - centerPoint[1]).toDouble(),
                 (translatePoint[0] - centerPoint[0]).toDouble()
             )
-        radian[0] = radian2 - radian1
-        radian[1] = radian2 + radian1
+
+        // 两圆中线指向原圆的切线形成的弧度
+        val srcRadian =
+            acos((centerRadius) / Geometry.length(centerPoint, centerLinePoint).toDouble())
 
 
+        (baseRadian - srcRadian).let { radian ->
+            srcPoint1[0] = centerPoint[0] + cos(radian).toFloat() * (centerRadius)
+            srcPoint1[1] = centerPoint[1] + sin(radian).toFloat() * (centerRadius)
+        }
+
+        (baseRadian + srcRadian).let { radian ->
+            srcPoint2[0] = centerPoint[0] + cos(radian).toFloat() * (centerRadius)
+            srcPoint2[1] = centerPoint[1] + sin(radian).toFloat() * (centerRadius)
+        }
+
+
+        // 两圆中线指向拖拽圆的切线形成的弧度
+        val dstRadian = acos(
+            (radius) / Geometry.length(centerLinePoint, translatePoint).toDouble())
+
+
+        (baseRadian + PI + dstRadian).let { radian ->
+            dstPoint1[0] = translatePoint[0] + cos(radian).toFloat() * (radius)
+            dstPoint1[1] = translatePoint[1] + sin(radian).toFloat() * (radius)
+        }
+
+        (baseRadian + PI - dstRadian).let { radian ->
+            dstPoint2[0] = translatePoint[0] + cos(radian).toFloat() * (radius)
+            dstPoint2[1] = translatePoint[1] + sin(radian).toFloat() * (radius)
+        }
     }
 
 
@@ -174,25 +186,26 @@ class TestView : View {
         return when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
                 if (isInCircle(event.x, event.y)) {
+                    isDrag = true
+                    pressedPoint[0] = event.x
+                    pressedPoint[1] = event.y
                     true
                 } else {
                     super.onTouchEvent(event)
                 }
-
             }
             MotionEvent.ACTION_MOVE -> {
-                isDrag = !isInCircle(event.x, event.y)
-                translatePoint[0] = event.x
-                translatePoint[1] = event.y
+
+                translatePoint[0] = centerPoint[0] + event.x - pressedPoint[0]
+                translatePoint[1] = centerPoint[1] + event.y - pressedPoint[1]
                 invalidate()
                 true
             }
 
             MotionEvent.ACTION_UP -> {
-                isDrag = false
-                translatePoint[0] = centerPoint[0]
-                translatePoint[1] = centerPoint[1]
-                invalidate()
+                upPoint[0] = translatePoint[0]
+                upPoint[1] = translatePoint[1]
+                reboundAnim.start()
                 super.onTouchEvent(event)
             }
             else -> {
@@ -201,15 +214,33 @@ class TestView : View {
         }
     }
 
-//    private fun getLength(src: FloatArray, dst: FloatArray): Float {
-//        return sqrt(
-//            (dst[1] - src[1]).toDouble().pow(2.0) + (dst[0] - src[0]).toDouble().pow(2.0)
-//        ).toFloat()
-//    }
-
+    /**
+     * 判断点击位置是否在圆内，外部的地方消化点击事件
+     */
     private fun isInCircle(x: Float, y: Float): Boolean {
-        return x in centerPoint[0].let { it - radius - paint.strokeWidth..it + radius + paint.strokeWidth }
-                && y in centerPoint[1].let { it - radius - paint.strokeWidth..it + radius + paint.strokeWidth }
+        return Geometry.length(x - centerPoint[0], y - centerPoint[1]) <= radius
+    }
+
+    /**
+     * 辅助线，调试用
+     */
+    private fun drawSupportLine(canvas: Canvas?) {
+        canvas?.run {
+            paint.color = Color.CYAN
+            drawPoints(srcPoint1, paint)
+            drawPoints(dstPoint1, paint)
+            drawLine(
+                centerPoint[0],
+                centerPoint[1],
+                translatePoint[0],
+                translatePoint[1],
+                paint
+            )
+            drawLine(srcPoint1[0], srcPoint1[1], centerLinePoint[0], centerLinePoint[1], paint)
+            drawLine(dstPoint1[0], dstPoint1[1], centerLinePoint[0], centerLinePoint[1], paint)
+            drawLine(srcPoint2[0], srcPoint2[1], centerLinePoint[0], centerLinePoint[1], paint)
+            drawLine(dstPoint2[0], dstPoint2[1], centerLinePoint[0], centerLinePoint[1], paint)
+        }
     }
 
 

@@ -2,6 +2,7 @@ package com.hxs.viewexercise
 
 import android.graphics.Path
 import kotlin.math.PI
+import kotlin.math.sqrt
 import kotlin.math.tan
 
 
@@ -10,7 +11,6 @@ object BezierUtil {
     private val circleRatio = 4 / 3f * tan(PI / 8).toFloat()
 
     fun addPath(path: Path, x: Float, y: Float, radius: Float, offset: Float = radius) {
-//        val radius = ((1 - ((offset / rawRadius) - 1) * 0.1f) * rawRadius).coerceAtLeast(10f)
         path.moveTo(x - radius, y)
 
         // 左上角
@@ -54,5 +54,10 @@ object BezierUtil {
             x - radius,
             y
         )
+    }
+
+
+    fun meteBall(center: FloatArray, dst: FloatArray, radius: Float): Float {
+        return radius / sqrt((dst[0] - center[0]) * (dst[0] - center[0]) + (dst[1] - center[1]) * (dst[1] - center[1]))
     }
 }
