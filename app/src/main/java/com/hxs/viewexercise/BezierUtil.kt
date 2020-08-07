@@ -62,7 +62,11 @@ object BezierUtil {
         return metaBall(center, dst[0], dst[1], radius)
     }
 
+    fun metaBall(center: Pair<Float, Float>, x: Float, y: Float, radius: Float): Float {
+        return (radius / sqrt((x - center.first).pow(2) + (y - center.second).pow(2)))
+    }
+
     fun metaBall(center: FloatArray, x: Float, y: Float, radius: Float): Float {
-        return radius / sqrt((x - center[0]).pow(2) + (y - center[1]).pow(2))
+        return (radius / sqrt((x - center[0]).pow(2) + (y - center[1]).pow(2)))
     }
 }

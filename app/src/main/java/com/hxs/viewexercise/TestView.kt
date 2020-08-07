@@ -30,8 +30,8 @@ class TestView : View {
         defStyleAttr
     )
 
-    private val VALUE_RAW_RADIUS = 80f
-    private val VALUE_DRAG_RADIUS = 20f
+    private val VALUE_RAW_RADIUS = 60f
+    private val VALUE_DRAG_RADIUS = 60f
     private val VALUE_PAINT_WIDTH = 5f
 
     private var paint: Paint = Paint().apply {
@@ -39,7 +39,7 @@ class TestView : View {
         strokeWidth = VALUE_PAINT_WIDTH
         strokeCap = Paint.Cap.ROUND
         color = Color.GREEN
-        style = Paint.Style.FILL_AND_STROKE
+        style = Paint.Style.STROKE
         strokeJoin = Paint.Join.ROUND
         flags = Paint.ANTI_ALIAS_FLAG
     }
@@ -59,7 +59,7 @@ class TestView : View {
 
     private val centerPoint: FloatArray
         get() = floatArrayOf(
-            measuredWidth / 2f,
+            measuredWidth / 2f + 150f,
             measuredHeight / 2f
         )
 
@@ -73,7 +73,7 @@ class TestView : View {
     private val dstPoint2 = FloatArray(2)
     private val upPoint = FloatArray(2)
     private val pressedPoint = FloatArray(2)
-    private var isDrag = false // 是否拖动圆
+    private var isDrag = true // 是否拖动圆
 
     private val path = Path()
     private val dragPath = Path()
@@ -90,6 +90,8 @@ class TestView : View {
 
 
     override fun onDraw(canvas: Canvas?) {
+        translatePoint[0] = measuredWidth / 2f - 40f
+        translatePoint[1] = measuredHeight / 2f
 
         super.onDraw(canvas)
 
@@ -114,7 +116,7 @@ class TestView : View {
                     close()
                 }
                 path.addPath(dragPath)
-//                drawSupportLine(this)
+                drawSupportLine(this)
             }
 
             paint.color = Color.GREEN
@@ -226,7 +228,7 @@ class TestView : View {
      */
     private fun drawSupportLine(canvas: Canvas?) {
         canvas?.run {
-            paint.color = Color.CYAN
+            paint.color = Color.RED
             drawPoints(srcPoint1, paint)
             drawPoints(dstPoint1, paint)
             drawLine(
