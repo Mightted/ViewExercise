@@ -8,6 +8,14 @@ object Geometry {
     private val temp = FloatArray(8)
 
 
+
+    fun length(point1:Pair<Float, Float>, point2: Pair<Float, Float>):Float {
+        return length(point1.first - point2.first, point1.second - point2.second)
+    }
+
+    fun length(point1:Pair<Float, Float>, point2: FloatArray, offset: Int = 0):Float {
+        return length(point1.first - point2[offset], point1.second - point2[offset + 1])
+    }
     /**
      * 获得两点间的距离
      */

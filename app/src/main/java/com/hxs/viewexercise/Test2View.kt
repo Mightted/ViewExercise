@@ -12,7 +12,7 @@ import android.view.View
 /**
  * Time: 2020/8/6
  * Author: Mightted
- * Description:
+ * Description: 基于MetaBall算法的原点指示器
  */
 class Test2View : View {
 
@@ -20,15 +20,27 @@ class Test2View : View {
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
+    /**
+     * 横纵轴的绘制范围
+     * 通过MetaBall算法来计算每个原点的形状和位置，难以通过path来得到其路径，只能遍历像素点来绘制
+     * 而绘制的范围越大，计算的压力也越大，所以需要预先确定最小绘制范围，保证动画的流畅度
+     *
+     */
     private val rangeWidth = IntArray(2)
     private val rangeHeight = IntArray(2)
+
+    /**
+     * 需要绘制的点集合
+     */
     private val points = mutableListOf<Float>()
-    private val centerPoints = ArrayList<Pair<Float, Float>>(3)
+    private val centerPoints = ArrayList<Pair<Float, Float>>(4)
     private val focusPoint = FloatArray(2)
+
     /**
      * 是否能循环滚动
      */
     private var isCycle = true
+    private var count = 2
 
     private var index = 0
 
@@ -132,12 +144,15 @@ class Test2View : View {
 
     private fun initData() {
         centerPoints.clear()
-        centerPoints.add(Pair(measuredWidth / 2f - normalRadius * 4f, measuredHeight / 2f))
-        centerPoints.add(Pair(measuredWidth / 2f, measuredHeight / 2f))
-        centerPoints.add(Pair(measuredWidth / 2f + normalRadius * 4f, measuredHeight / 2f))
+        val initOffset = measuredWidth / 2f - (count - 1) * 2 * normalRadius
+        val unitOffset = normalRadius * 4f
+        for (index in 0 until count) {
+            centerPoints.add(Pair(initOffset + index * unitOffset, measuredHeight / 2f))
+        }
+
         updateRect()
-        focusPoint[0] = measuredWidth / 2f - normalRadius * 4f
-        focusPoint[1] = measuredHeight / 2f
+        focusPoint[0] = centerPoints[0].first
+        focusPoint[1] = centerPoints[0].second
     }
 
     private fun updateRect() {
@@ -147,10 +162,10 @@ class Test2View : View {
         rangeHeight[1] = measuredHeight / 2f.toInt()
 
         centerPoints.forEach {
-            rangeWidth[0] = (rangeWidth[0].coerceAtMost((it.first - unitValue * 2).toInt()))
-            rangeHeight[0] = (rangeHeight[0].coerceAtMost((it.second - unitValue * 2).toInt()))
-            rangeWidth[1] = (rangeWidth[0].coerceAtLeast((it.first + unitValue * 2).toInt()))
-            rangeHeight[1] = (rangeHeight[1].coerceAtLeast((it.second + unitValue * 2).toInt()))
+            rangeWidth[0] = (rangeWidth[0].coerceAtMost((it.first - unitValue * 3).toInt()))
+            rangeHeight[0] = (rangeHeight[0].coerceAtMost((it.second - unitValue *  3).toInt()))
+            rangeWidth[1] = (rangeWidth[0].coerceAtLeast((it.first + unitValue *  3).toInt()))
+            rangeHeight[1] = (rangeHeight[1].coerceAtLeast((it.second + unitValue *  3).toInt()))
         }
     }
 }
