@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">ViewExercise</string>
+
+    <string name="history_Sun">Sun</string>
+    <string name="history_Mon">Mon</string>
+    <string name="history_Tues">Tues</string>
+    <string name="history_Wed">Wed</string>
+    <string name="history_Thur">Thur</string>
+    <string name="history_Fri">Fri</string>
+    <string name="history_Sat">Sat</string>
 </resources>

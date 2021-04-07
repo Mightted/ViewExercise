@@ -27,6 +27,8 @@ class TestActivity : AppCompatActivity() {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.progress = (testView.reboundIndex() * 100).toInt()
+
             }
         })
 
