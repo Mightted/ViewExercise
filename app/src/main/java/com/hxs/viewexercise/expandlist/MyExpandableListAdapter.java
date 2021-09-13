@@ -25,10 +25,6 @@ public class MyExpandableListAdapter extends BaseExpandableListAdapter {
     private Context context;
     View.OnClickListener ivGoToChildClickListener;
 
-    public MyExpandableListAdapter() {
-
-    }
-
     public MyExpandableListAdapter(String[] classes, String[] stuents, Context context,
                                    View.OnClickListener ivGoToChildClickListener) {
         this.classes = classes;

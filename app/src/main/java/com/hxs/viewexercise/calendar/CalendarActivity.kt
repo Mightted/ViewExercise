@@ -1,10 +1,13 @@
 package com.hxs.viewexercise.calendar
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.hxs.expandedcalendarview.data.Day
+import com.hxs.expandedcalendarview.data.Event
+import com.hxs.expandedcalendarview.widget.CollapsibleCalendar
 import com.hxs.viewexercise.R
 import kotlinx.android.synthetic.main.activity_calendar.*
-import java.text.SimpleDateFormat
 import java.util.*
 
 class CalendarActivity : AppCompatActivity() {
@@ -14,29 +17,47 @@ class CalendarActivity : AppCompatActivity() {
         setContentView(R.layout.activity_calendar)
 
         last.setOnClickListener {
-            calendarView.lastMonth()
+//            calendarView.last()
         }
         next.setOnClickListener {
-            calendarView.nextMonth()
+//            calendarView.next()
         }
 
         curTime.setOnClickListener {
-            calendarView.show()
+//            calendarView.show()
         }
 
-        val format = SimpleDateFormat("YYYY-MM")
-        val weekFmt = SimpleDateFormat("YYYY-MM-dd")
+        calendarView.setCalendarListener(object : CollapsibleCalendar.CalendarListener {
 
-        calendarView.setOnDateChangedListener(object : WeekCalendarView.DateChangeListener {
-            override fun onDateChanged(date: Date?) {
-                date?.let { curTime.text = format.format(it) }
-
+            override fun onItemClick(day: Day) {
+                println("onItemClick:${day.year}:${day.month}:${day.day}")
             }
 
-            override fun onWeekClicked(startDate: Date?, endDate: Date?) {
-                println("${weekFmt.format(startDate)}--${weekFmt.format(endDate)}")
+            override fun onMonthChange(calendar: Calendar) {
+                println("onMonthChange:${calendar.get(Calendar.MONTH)}")
+                val list = mutableListOf<Event>()
+                list.add(Event(2021, 7, 15))
+                list.add(Event(2021, 7, 17))
+
+                list.add(Event(2021, 7, 23))
+//                return list
             }
+
         })
+
+//        val format = SimpleDateFormat("YYYY-MM")
+//        val weekFmt = SimpleDateFormat("YYYY-MM-dd")
+
+//        calendarView.setOnDateChangedListener(object : DateChangeListener {
+//            override fun onDateChanged(date: Date?) {
+//                date?.let { curTime.text = format.format(it) }
+//
+//            }
+//
+//            override fun onWeekClicked(startDate: Date?, endDate: Date?) {
+//                println("${weekFmt.format(startDate)}--${weekFmt.format(endDate)}")
+//            }
+//        })
 
     }
 

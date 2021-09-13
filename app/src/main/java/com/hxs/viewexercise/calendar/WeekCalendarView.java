@@ -244,7 +244,7 @@ public class WeekCalendarView extends View implements View.OnTouchListener {
         }
     }
 
-    public void lastMonth() {
+    public void last() {
         if (!isExpanded) {
             return;
         }
@@ -257,7 +257,7 @@ public class WeekCalendarView extends View implements View.OnTouchListener {
         invalidate();
     }
 
-    public void nextMonth() {
+    public void next() {
         if (!isExpanded) {
             return;
         }
@@ -295,20 +295,24 @@ public class WeekCalendarView extends View implements View.OnTouchListener {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (!isExpanded) {
-            return false;
-        }
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                setSelectedDateByCoor(event.getX(), event.getY());
+                if (isExpanded) {
+                    setSelectedDateByCoor(event.getX(), event.getY());
+                }
                 break;
             case MotionEvent.ACTION_UP:
                 if (!isExpanded) {
                     if (listener != null) {
                         calendar.setTime(selectedDate);
                         calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+                        calendar.set(Calendar.HOUR, 0);
+                        calendar.set(Calendar.MINUTE, 0);
+                        calendar.set(Calendar.SECOND, 0);
                         Date start = calendar.getTime();
-                        calendar.set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY);
+                        calendar.add(Calendar.DATE, 6);
+                        calendar.add(Calendar.SECOND, -1);
+//                        calendar.set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY);
                         Date end = calendar.getTime();
                         listener.onWeekClicked(start, end);
                     }
@@ -340,11 +344,11 @@ public class WeekCalendarView extends View implements View.OnTouchListener {
     }
 
 
-    interface DateChangeListener {
-        void onDateChanged(Date date);
-
-        void onWeekClicked(Date startDate, Date endDate);
-    }
+//    interface DateChangeListener {
+//        void onDateChanged(Date date);
+//
+//        void onWeekClicked(Date startDate, Date endDate);
+//    }
 
     public void show() {
         isExpanded = true;

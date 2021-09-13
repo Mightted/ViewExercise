@@ -3,7 +3,6 @@ package com.hxs.viewexercise.expandlist;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ExpandableListView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -79,13 +78,13 @@ public class ExpandableListViewActivity extends AppCompatActivity {
         });
 
         //点击某个分组时，跳转到指定Activity
-        elv01.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
-            @Override
-            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-                Toast.makeText(ExpandableListViewActivity.this, "组被点击了，跳转到具体的Activity", Toast.LENGTH_SHORT).show();
-                return true;    //拦截点击事件，不再处理展开或者收起
-            }
-        });
+//        elv01.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+//            @Override
+//            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+//                Toast.makeText(ExpandableListViewActivity.this, "组被点击了，跳转到具体的Activity", Toast.LENGTH_SHORT).show();
+//                return true;    //拦截点击事件，不再处理展开或者收起
+//            }
+//        });
 
         //某个分组中的子View被点击时的事件
 //        elv01.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {

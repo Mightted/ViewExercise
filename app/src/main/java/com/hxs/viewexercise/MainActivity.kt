@@ -12,6 +12,7 @@ import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnRepeat
 import androidx.core.animation.doOnStart
 import com.hxs.viewexercise.activity.MetaBallActivity
+import com.hxs.viewexercise.activity.MotionActivity
 import com.hxs.viewexercise.activity.TestActivity
 import com.hxs.viewexercise.calendar.CalendarActivity
 import com.hxs.viewexercise.expandlist.ExpandableListViewActivity
