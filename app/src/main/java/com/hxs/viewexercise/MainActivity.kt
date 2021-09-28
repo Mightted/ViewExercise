@@ -7,16 +7,8 @@ import android.os.Bundle
 import android.view.View
 import android.view.animation.LinearInterpolator
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.animation.addListener
-import androidx.core.animation.doOnEnd
-import androidx.core.animation.doOnRepeat
-import androidx.core.animation.doOnStart
 import com.hxs.viewexercise.activity.MetaBallActivity
-import com.hxs.viewexercise.activity.MotionActivity
-import com.hxs.viewexercise.activity.TestActivity
 import com.hxs.viewexercise.calendar.CalendarActivity
-import com.hxs.viewexercise.expandlist.ExpandableListViewActivity
-import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,5 +36,13 @@ class MainActivity : AppCompatActivity() {
     fun gotoTestPage(view: View) {
         startActivity(Intent(this, CalendarActivity::class.java))
 //        startActivity(Intent(this, TestActivity::class.java))
+    }
+
+    fun toMotion1(view: View) {
+        startActivity(Intent(this, com.hxs.viewexercise.motionlayout.Motion1Activity::class.java))
+    }
+
+    fun toMotion2(view: View) {
+        startActivity(Intent(this, com.hxs.viewexercise.motionlayout.Motion2Activity::class.java))
     }
 }

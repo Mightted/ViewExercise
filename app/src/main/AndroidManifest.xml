@@ -21,6 +21,8 @@
         <activity android:name=".expandlist.ExpandableListViewActivity" />
         <activity android:name=".calendar.CalendarActivity" />
         <activity android:name=".activity.MotionActivity" />
+        <activity android:name=".motionlayout.Motion1Activity" />
+        <activity android:name=".motionlayout.Motion2Activity" />
 
         <service
             android:name=".MyWallPaper"

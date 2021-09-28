@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="to_today">回到今天</string>
+    <string name="has_drive_record">有驾驶行为</string>
+</resources>

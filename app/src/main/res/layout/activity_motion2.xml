@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.motion.widget.MotionLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/motionLayout"
+    app:layoutDescription="@xml/scene_motion2"
+    app:showPaths="true">
+
+
+    <View
+        android:id="@+id/guide"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardCenter"
+        android:layout_width="318dp"
+        android:layout_height="202dp"
+        android:theme="@style/Theme.MaterialComponents"
+        app:cardBackgroundColor="@color/colorPrimary"
+        app:cardCornerRadius="8dp"
+        app:layout_constraintCircle="@id/guide"
+        app:layout_constraintCircleAngle="0"
+        app:layout_constraintCircleRadius="190dp" >
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/centerContent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+
+    </com.google.android.material.card.MaterialCardView>
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardLeft1"
+        android:layout_width="318dp"
+        android:layout_height="202dp"
+        android:theme="@style/Theme.MaterialComponents"
+        app:cardBackgroundColor="@color/colorPrimaryDark"
+        app:cardCornerRadius="8dp"
+        app:layout_constraintCircle="@id/guide"
+        app:layout_constraintCircleAngle="0"
+        app:layout_constraintCircleRadius="190dp" />
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardLeft2"
+        android:layout_width="318dp"
+        android:layout_height="202dp"
+        android:theme="@style/Theme.MaterialComponents"
+        app:cardBackgroundColor="@color/colorAccent"
+        app:cardCornerRadius="8dp"
+        android:alpha="0"
+        app:layout_constraintCircle="@id/guide"
+        app:layout_constraintCircleAngle="0"
+        app:layout_constraintCircleRadius="190dp" />
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardRight1"
+        android:layout_width="318dp"
+        android:layout_height="202dp"
+        android:theme="@style/Theme.MaterialComponents"
+        app:cardBackgroundColor="@color/colorAccent"
+        app:cardCornerRadius="8dp"
+        app:layout_constraintCircle="@id/guide"
+        app:layout_constraintCircleAngle="0"
+        app:layout_constraintCircleRadius="190dp" />
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardRight2"
+        android:layout_width="318dp"
+        android:layout_height="202dp"
+        android:theme="@style/Theme.MaterialComponents"
+        app:cardBackgroundColor="@color/colorPrimary"
+        app:cardCornerRadius="8dp"
+        android:alpha="0"
+        app:layout_constraintCircle="@id/guide"
+        app:layout_constraintCircleAngle="0"
+        app:layout_constraintCircleRadius="190dp" />
+
+
+</androidx.constraintlayout.motion.widget.MotionLayout>

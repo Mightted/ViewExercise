@@ -27,6 +27,9 @@ class CalendarActivity : AppCompatActivity() {
 //            calendarView.show()
         }
 
+        calendarView.initModel(this)
+        calendarView.initPager(this)
+
         calendarView.setCalendarListener(object : CollapsibleCalendar.CalendarListener {
 
             override fun onItemClick(day: Day) {
@@ -40,6 +43,7 @@ class CalendarActivity : AppCompatActivity() {
                 list.add(Event(2021, 7, 17))
 
                 list.add(Event(2021, 7, 23))
+                calendarView.updateEvents(list)
 //                return list
             }
 

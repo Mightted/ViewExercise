@@ -60,7 +60,7 @@ class CalendarAdapter(context: Context, cal: Calendar) {
         }
     }
 
-    fun refresh() {
+    fun refresh(weekOffset: Int = 0, isExpanded: Boolean = true) {
         // clear data
         mItemList.clear()
         mViewList.clear()
@@ -76,8 +76,9 @@ class CalendarAdapter(context: Context, cal: Calendar) {
 
         // generate day list
         val offset = 0 - (firstDayOfWeek - mFirstDayOfWeek) + 1
+        val wOffset  = weekOffset * 7
         val length = Math.ceil(((lastDayOfMonth - offset + 1).toFloat() / 7).toDouble()).toInt() * 7
-        for (i in offset until length + offset) {
+        for (i in (offset + wOffset) until (length + offset + wOffset)) {
             val numYear: Int
             val numMonth: Int
             val numDay: Int
@@ -116,8 +117,13 @@ class CalendarAdapter(context: Context, cal: Calendar) {
             val imgEventTag = view.findViewById<View>(R.id.img_event_tag) as ImageView
 
             txtDay.text = day.day.toString()
+
             if (day.month != calendar.get(Calendar.MONTH)) {
-                txtDay.alpha = 0f
+                if (isExpanded) {
+                    txtDay.alpha = 0f
+                } else {
+                    txtDay.alpha = 0.3f
+                }
             } else if (day.diff > 0) {
                 txtDay.alpha = 0.3f
             } else {

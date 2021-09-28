@@ -65,6 +65,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         txt_title
+
         <TextView
             android:id="@+id/txt_title"
             android:layout_width="wrap_content"
@@ -82,7 +83,6 @@
             tools:text="Jun 2015" />
 
 
-
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
@@ -95,11 +95,11 @@
             android:layout_height="40dp"
             android:layout_gravity="center"
             android:layout_marginEnd="2dp"
-            android:textColor="#FF57C6C1"
-            android:text="回到今天"
             android:clickable="true"
+            android:focusable="true"
             android:padding="10dp"
-            android:focusable="true" />
+            android:text="@string/to_today"
+            android:textColor="#FF57C6C1" />
 
     </LinearLayout>
 
@@ -121,22 +121,20 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-
-            <TableLayout
-                android:id="@+id/table_body"
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/pager"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:isScrollContainer="true" />
+                android:layout_height="wrap_content" />
 
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:textColor="#FF57C6C1"
-                android:drawablePadding="6dp"
                 android:drawableStart="@drawable/bg_circle_green"
-                android:text="有駕駛行為" />
+                android:drawablePadding="6dp"
+                android:text="@string/has_drive_record"
+                android:textColor="#FF57C6C1" />
 
         </LinearLayout>
 
@@ -157,13 +155,13 @@
         app:eiv_colorMore="@android:color/black"
         app:eiv_roundedCorners="true"
         app:eiv_switchColor="true" />
-<!--    <ImageView-->
-<!--        android:id="@+id/bottomExpandedView"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="24dp"-->
-<!--        android:layout_gravity="center_horizontal"-->
-<!--        android:layout_marginVertical="4dp"-->
-<!--        android:src="@drawable/down_arrow_icon" />-->
+    <!--    <ImageView-->
+    <!--        android:id="@+id/bottomExpandedView"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="24dp"-->
+    <!--        android:layout_gravity="center_horizontal"-->
+    <!--        android:layout_marginVertical="4dp"-->
+    <!--        android:src="@drawable/down_arrow_icon" />-->
 
 
 </LinearLayout>

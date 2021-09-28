@@ -18,8 +18,13 @@ import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModelProvider
+import androidx.viewpager2.widget.ViewPager2
+import com.hxs.expandedcalendarview.CalendarModel
 import com.hxs.expandedcalendarview.R
 import com.hxs.expandedcalendarview.data.CalendarAdapter
+import com.hxs.expandedcalendarview.data.CalendarGroup
 import com.hxs.expandedcalendarview.data.Day
 import com.hxs.expandedcalendarview.data.Event
 import com.hxs.expandedcalendarview.view.BounceAnimator
@@ -33,18 +38,41 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
 
     private var dateFormat = SimpleDateFormat("yyyy-MM-dd", getCurrentLocale(context))
 
+    private lateinit var model: CalendarModel
+
+
+    fun initModel(activity: FragmentActivity) {
+        model = ViewModelProvider(activity).get(CalendarModel::class.java)
+    }
+
+//    private val calendars: CalendarGroup = CalendarGroup(
+//        Calendar.getInstance().apply { add(Calendar.MONTH, -1) },
+//        Calendar.getInstance(),
+//        Calendar.getInstance().apply { add(Calendar.MONTH, 1) }
+//    )
+//
+//    private fun resetCalendars() {
+//        calendars.preDate = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }
+//        calendars.curDate = Calendar.getInstance()
+//        calendars.nextDate = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }
+//    }
+
     override fun changeToToday() {
+//        resetCalendars()
         val calendar = Calendar.getInstance()
-        val calenderAdapter = CalendarAdapter(context, calendar);
+        val calenderAdapter = CalendarAdapter(context, calendar)
         calenderAdapter.mEventList = mAdapter!!.mEventList
         calenderAdapter.setFirstDayOfWeek(firstDayOfWeek)
         val today = GregorianCalendar()
         this.selectedItem = null
         this.selectedItemPosition = -1
-        this.selectedDay = Day(today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH))
+        this.selectedDay =
+            Day(today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH))
         mCurrentWeekIndex = suitableRowIndex
         setAdapter(calenderAdapter)
         mListener?.onItemClick(selectedDay as Day)
+        pagerAdapter?.changeToToday()
+        model.curDate.postValue(Calendar.getInstance())
     }
 
     override fun onClick(view: View?) {
@@ -71,20 +99,23 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
 
     private val suitableRowIndex: Int
         get() {
-            if (selectedItemPosition != -1) {
-                val view = mAdapter!!.getView(selectedItemPosition)
-                val row = view.parent as TableRow
-
-                return mTableBody.indexOfChild(row)
-            } else if (todayItemPosition != -1) {
-                val view = mAdapter!!.getView(todayItemPosition)
-                val row = view.parent as TableRow
-
-                return mTableBody.indexOfChild(row)
-            } else {
-                return 0
-            }
+            return pagerAdapter?.suitableRowIndex() ?: 0
         }
+//        get() {
+//            if (selectedItemPosition != -1) {
+//                val view = mAdapter!!.getView(selectedItemPosition)
+//                val row = view.parent as TableRow
+//
+//                return mTableBody.indexOfChild(row)
+//            } else if (todayItemPosition != -1) {
+//                val view = mAdapter!!.getView(todayItemPosition)
+//                val row = view.parent as TableRow
+//
+//                return mTableBody.indexOfChild(row)
+//            } else {
+//                return 0
+//            }
+//        }
 
     val year: Int
         get() = mAdapter!!.calendar.get(Calendar.YEAR)
@@ -161,7 +192,6 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
             if (state == STATE_EXPANDED) {
                 expanded = true
                 dateFormat = SimpleDateFormat("yyyy-MM", getCurrentLocale(context))
-
             }
         }
 
@@ -173,7 +203,11 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
         init(context)
     }
 
-    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+    constructor(
+        context: Context,
+        attrs: AttributeSet,
+        defStyleAttr: Int
+    ) : super(context, attrs, defStyleAttr) {
         init(context)
     }
 
@@ -201,11 +235,17 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
 
 
         expandIconView.setOnClickListener {
+
             if (expanded) {
                 collapse(300)
+                model.expandState.value = STATE_COLLAPSED
             } else {
                 expand(300)
+                model.expandState.value = STATE_EXPANDED
             }
+            model.curDate.postValue(mAdapter!!.calendar)
+            pagerAdapter?.needUpdate(true)
+
         }
 
         this.post { collapseTo(mCurrentWeekIndex) }
@@ -216,11 +256,12 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
-        mInitHeight = mTableBody.measuredHeight
+//        mInitHeight = mTableBody.measuredHeight
+        mInitHeight = pager.measuredHeight
 
         if (mIsWaitingForUpdate) {
             redraw()
-            mHandler.post { collapseTo(mCurrentWeekIndex) }
+            mHandler.post { collapseTo(pagerAdapter?.currentWeekIndex() ?: 0) }
             mIsWaitingForUpdate = false
 //            if (mListener != null) {
 //                mListener!!.onDataUpdate()
@@ -280,7 +321,7 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
             }
 //            mTxtTitle.text = dateFormat.format(mAdapter.calendar.time)
             mTableHead.removeAllViews()
-            mTableBody.removeAllViews()
+//            mTableBody.removeAllViews()
 
             var rowCurrent: TableRow
             rowCurrent = TableRow(context)
@@ -302,34 +343,34 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
             mTableHead.addView(rowCurrent)
 
             // set day view
-            for (i in 0 until mAdapter.count) {
-
-                if (i % 7 == 0) {
-                    rowCurrent = TableRow(context)
-                    rowCurrent.layoutParams = TableLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                    mTableBody.addView(rowCurrent)
-                }
-                val view = mAdapter.getView(i)
-                view.layoutParams = TableRow.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1f
-                )
-                params.let { params ->
-                    if (params != null && (mAdapter.getItem(i).diff < params.prevDays || mAdapter.getItem(i).diff > params.nextDaysBlocked)) {
-                        view.isClickable = false
-                        view.alpha = 0.3f
-                    } else {
-                        if (view.isClickable) {
-                            view.setOnClickListener { v -> onItemClicked(v, mAdapter.getItem(i)) }
-                        }
-                    }
-                }
-                rowCurrent.addView(view)
-            }
+//            for (i in 0 until mAdapter.count) {
+//
+//                if (i % 7 == 0) {
+//                    rowCurrent = TableRow(context)
+//                    rowCurrent.layoutParams = TableLayout.LayoutParams(
+//                        ViewGroup.LayoutParams.MATCH_PARENT,
+//                        ViewGroup.LayoutParams.WRAP_CONTENT
+//                    )
+//                    mTableBody.addView(rowCurrent)
+//                }
+//                val view = mAdapter.getView(i)
+//                view.layoutParams = TableRow.LayoutParams(
+//                    0,
+//                    ViewGroup.LayoutParams.WRAP_CONTENT,
+//                    1f
+//                )
+//                params.let { params ->
+//                    if (params != null && (mAdapter.getItem(i).diff < params.prevDays || mAdapter.getItem(i).diff > params.nextDaysBlocked)) {
+//                        view.isClickable = false
+//                        view.alpha = 0.3f
+//                    } else {
+//                        if (view.isClickable) {
+//                            view.setOnClickListener { v -> onItemClicked(v, mAdapter.getItem(i)) }
+//                        }
+//                    }
+//                }
+//                rowCurrent.addView(view)
+//            }
 
             redraw()
             mIsWaitingForUpdate = true
@@ -341,9 +382,12 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
 
     }
 
-    fun onItemClicked(view: View, day: Day) {
+    fun onItemClicked(day: Day) {
         select(day)
-//        expandIconView.performClick()
+        if (expanded) {
+            expandIconView.performClick()
+        }
+        mListener?.onMonthChange(mAdapter!!.calendar)
 
         val cal = mAdapter!!.calendar
 
@@ -404,12 +448,14 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
         val cal = mAdapter!!.calendar
         params.let {
             if (it != null && (Calendar.getInstance().get(Calendar.YEAR) * 12 + Calendar.getInstance()
-                    .get(Calendar.MONTH) + it.prevDays / 30) > (cal.get(Calendar.YEAR) * 12 + cal.get(Calendar.MONTH))
+                    .get(Calendar.MONTH) + it.prevDays / 30) > (cal.get(Calendar.YEAR) * 12 + cal.get(
+                    Calendar.MONTH
+                ))
             ) {
                 val myAnim = AnimationUtils.loadAnimation(context, R.anim.bounce)
                 val interpolator = BounceAnimator(0.1, 10.0)
                 myAnim.setInterpolator(interpolator)
-                mTableBody.startAnimation(myAnim)
+//                mTableBody.startAnimation(myAnim)
                 mTableHead.startAnimation(myAnim)
                 return
             }
@@ -419,9 +465,9 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
                 cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) - 1)
             }
             reload()
-            if (mListener != null) {
-                mListener!!.onMonthChange(cal)
-            }
+//            if (mListener != null) {
+//                mListener!!.onMonthChange(cal)
+//            }
         }
 
     }
@@ -430,12 +476,14 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
         val cal = mAdapter!!.calendar
         params.let {
             if (it != null && (Calendar.getInstance().get(Calendar.YEAR) * 12 + Calendar.getInstance()
-                    .get(Calendar.MONTH) + it.nextDaysBlocked / 30) < (cal.get(Calendar.YEAR) * 12 + cal.get(Calendar.MONTH))
+                    .get(Calendar.MONTH) + it.nextDaysBlocked / 30) < (cal.get(Calendar.YEAR) * 12 + cal.get(
+                    Calendar.MONTH
+                ))
             ) {
                 val myAnim = AnimationUtils.loadAnimation(context, R.anim.bounce)
                 val interpolator = BounceAnimator(0.1, 10.0)
                 myAnim.setInterpolator(interpolator)
-                mTableBody.startAnimation(myAnim)
+//                mTableBody.startAnimation(myAnim)
                 mTableHead.startAnimation(myAnim)
                 return
             }
@@ -445,14 +493,15 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
                 cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) + 1)
             }
             reload()
-            if (mListener != null) {
-                mListener!!.onMonthChange(cal)
-            }
+//            if (mListener != null) {
+//                mListener!!.onMonthChange(cal)
+//            }
         }
     }
 
     fun updateEvents(eventList: List<Event>?) {
         mAdapter?.addAllEvent(eventList)
+        pagerAdapter?.updateEvents(eventList)
         reload()
     }
 
@@ -498,7 +547,7 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
     }
 
     fun nextWeek() {
-        if (mCurrentWeekIndex + 1 >= mTableBody.childCount) {
+        if (mCurrentWeekIndex + 1 >= pagerAdapter?.getTabCount() ?: 0) {
             mCurrentWeekIndex = 0
             nextMonth()
         } else {
@@ -542,10 +591,14 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
             mCurrentWeekIndex = index
 
             val currentHeight = mInitHeight
-            val targetHeight = mTableBody.getChildAt(index).measuredHeight
+            // TODO: 2021/9/13
+            val targetHeight = pagerAdapter?.getChildHeightAt(context) ?: 0
+//            val targetHeight = mTableBody.getChildAt(index).measuredHeight
             var tempHeight = 0
+            // TODO: 2021/9/13 ???
             for (i in 0 until index) {
-                tempHeight += mTableBody.getChildAt(i).measuredHeight
+                tempHeight += pagerAdapter?.getChildHeightAt(context) ?: 0
+//                tempHeight += mTableBody.getChildAt(i).measuredHeight
             }
             val topHeight = tempHeight
 
@@ -583,14 +636,20 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
         var index = index
         if (state == STATE_COLLAPSED) {
             if (index == -1) {
-                index = mTableBody.childCount - 1
+                // TODO: 2021/9/13
+                index = (pagerAdapter?.getTabCount() ?: 1) - 1
+//                index = mTableBody.childCount - 1
             }
             mCurrentWeekIndex = index
 
-            val targetHeight = mTableBody.getChildAt(index).measuredHeight
+            // TODO: 2021/9/13
+            val targetHeight = pagerAdapter?.getChildHeightAt(context) ?: 0
+//            val targetHeight = mTableBody.getChildAt(index).measuredHeight
             var tempHeight = 0
             for (i in 0 until index) {
-                tempHeight += mTableBody.getChildAt(i).measuredHeight
+                // TODO: 2021/9/13
+                tempHeight += pagerAdapter?.getChildHeightAt(context) ?: 0
+//                tempHeight += mTableBody.getChildAt(i).measuredHeight
             }
             val topHeight = tempHeight
 
@@ -668,6 +727,98 @@ class CollapsibleCalendar : UICalendar, View.OnClickListener {
     // callback
     fun setCalendarListener(listener: CalendarListener) {
         mListener = listener
+    }
+
+
+    fun initPager(activity: FragmentActivity) {
+        pagerAdapter = CalendarPageAdapter(activity) {
+            onItemClicked(it)
+            pagerAdapter?.updateClickedItem(it)
+//            mListener?.onItemClick(it)
+//            pagerAdapter?.changeToToday()
+//            collapseTo(mCurrentWeekIndex)
+
+        }
+
+        pager.run {
+            adapter = pagerAdapter
+            val centerItem = (pagerAdapter?.itemCount ?: 0) / 2
+            setCurrentItem(centerItem, false)
+            registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageScrolled(
+                    position: Int,
+                    positionOffset: Float,
+                    positionOffsetPixels: Int
+                ) {
+                    super.onPageScrolled(position, positionOffset, positionOffsetPixels)
+                    if (position != centerItem && positionOffset == 0f) {
+                        if (position > centerItem) {
+                            if (isNewest()) {
+                                pager.setCurrentItem(centerItem, true)
+                                return
+                            }
+                            if (state == STATE_COLLAPSED) {
+                                mBtnNextWeek.performClick()
+                            } else if (state == STATE_EXPANDED) {
+                                mBtnNextMonth.performClick()
+                            }
+
+                        } else {
+                            if (state == STATE_COLLAPSED) {
+                                mBtnPrevWeek.performClick()
+                            } else if (state == STATE_EXPANDED) {
+                                mBtnPrevMonth.performClick()
+                            }
+//                            prevMonth()
+//                            model.curDate.postValue(mAdapter!!.calendar)
+//                            mListener?.onMonthChange(mAdapter!!.calendar)
+//                            mListener?.onMonthChange(
+//                                pagerAdapter?.last(state == STATE_COLLAPSED) ?: Calendar.getInstance()
+//                            )
+//                            pagerAdapter?.last()
+                        }
+                        model.curDate.value = mAdapter!!.calendar
+                        mListener?.onMonthChange(mAdapter!!.calendar)
+                        pagerAdapter?.setWeekIndex(mCurrentWeekIndex)
+                        pager.setCurrentItem(centerItem, false)
+                    }
+                }
+            })
+        }
+    }
+
+    private fun isNewest(): Boolean {
+        return mAdapter?.calendar?.let {
+            if (state == STATE_COLLAPSED) {
+                isNewestMonth(it.timeInMillis) && it.get(Calendar.WEEK_OF_MONTH) >= mCurrentWeekIndex + 1
+//                mBtnNextWeek.performClick()
+            } else {
+                isNewestMonth(it.timeInMillis)
+
+//                mBtnNextMonth.performClick()
+            }
+//            true
+
+        } ?: false
+//        if (state == STATE_COLLAPSED) {
+//            mBtnNextWeek.performClick()
+//        } else if (state == STATE_EXPANDED) {
+//
+//
+//            mBtnNextMonth.performClick()
+//        }
+//        return false
+    }
+
+    private fun isNewestMonth(time: Long): Boolean {
+        val calendar = Calendar.getInstance()
+        val curYear = calendar.get(Calendar.YEAR)
+        val curMonth = calendar.get(Calendar.MONTH)
+        calendar.timeInMillis = time
+        val selectedYear = calendar.get(Calendar.YEAR)
+        val selectedMonth = calendar.get(Calendar.MONTH)
+        return (selectedYear - curYear) * 12 + selectedMonth - curMonth >= 0
+
     }
 
     interface CalendarListener {

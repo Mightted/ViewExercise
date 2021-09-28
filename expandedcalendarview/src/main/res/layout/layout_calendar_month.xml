@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="wrap_content">
+
+    <com.hxs.expandedcalendarview.newwidget.NewCollapsibleCalendar
+        android:id="@+id/calendarBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:selectedItem_background="@drawable/bg_circle_green"
+        android:isScrollContainer="true" />
+
+</FrameLayout>

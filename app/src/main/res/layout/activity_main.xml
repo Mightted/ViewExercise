@@ -21,8 +21,21 @@
         android:onClick="gotoTestPage"
         android:text="测试页面" />
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="toMotion1"
+        android:text="toMotion1" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="toMotion2"
+        android:text="toMotion2" />
+
 
     <com.hxs.viewexercise.linechart.LineChartView
+        android:visibility="gone"
         android:id="@+id/animatorView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>

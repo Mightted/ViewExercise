@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="to_today">Today</string>
+    <string name="has_drive_record">We got the driving behavior record</string>
+</resources>

@@ -1,6 +1,7 @@
 package com.hxs.expandedcalendarview.widget
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.Color
@@ -10,6 +11,8 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
+import androidx.fragment.app.FragmentActivity
+import androidx.viewpager2.widget.ViewPager2
 import com.hxs.expandedcalendarview.R
 import com.hxs.expandedcalendarview.data.Day
 import com.hxs.expandedcalendarview.view.ExpandIconView
@@ -32,7 +35,9 @@ abstract class UICalendar constructor(context: Context, attrs: AttributeSet? = n
     protected var mTxtTitle: TextView
     protected var mTableHead: TableLayout
     protected var mScrollViewBody: LockScrollView
-    protected var mTableBody: TableLayout
+
+    //    protected var mTableBody: TableLayout
+    protected var pager: ViewPager2
     protected var mLayoutBtnGroupMonth: RelativeLayout
     protected var mLayoutBtnGroupWeek: RelativeLayout
     protected var mBtnPrevMonth: ImageView
@@ -41,7 +46,9 @@ abstract class UICalendar constructor(context: Context, attrs: AttributeSet? = n
     protected var mBtnNextWeek: ImageView
     protected var expandIconView: ExpandIconView
     protected var clEntireTextView: LinearLayout
-//    protected var bottomExpandedView: ImageView
+
+    //    protected var bottomExpandedView: ImageView
+    protected var pagerAdapter: CalendarPageAdapter? = null
     protected var mTodayIcon: TextView
     var datePattern = "MMMM"
         set(value: String) {
@@ -161,19 +168,19 @@ abstract class UICalendar constructor(context: Context, attrs: AttributeSet? = n
             }
 
             override fun onSwipeLeft() {
-                if (state == STATE_COLLAPSED) {
-                    mBtnNextWeek.performClick()
-                } else if (state == STATE_EXPANDED) {
-                    mBtnNextMonth.performClick()
-                }
+//                if (state == STATE_COLLAPSED) {
+//                    mBtnNextWeek.performClick()
+//                } else if (state == STATE_EXPANDED) {
+//                    mBtnNextMonth.performClick()
+//                }
             }
 
             override fun onSwipeRight() {
-                if (state == STATE_COLLAPSED) {
-                    mBtnPrevWeek.performClick()
-                } else if (state == STATE_EXPANDED) {
-                    mBtnPrevMonth.performClick()
-                }
+//                if (state == STATE_COLLAPSED) {
+//                    mBtnPrevWeek.performClick()
+//                } else if (state == STATE_EXPANDED) {
+//                    mBtnPrevMonth.performClick()
+//                }
             }
 
             override fun onSwipeBottom() {
@@ -203,7 +210,8 @@ abstract class UICalendar constructor(context: Context, attrs: AttributeSet? = n
         mTxtTitle = rootView.findViewById(R.id.txt_title)
         mTodayIcon = rootView.findViewById(R.id.today_icon)
         mTableHead = rootView.findViewById(R.id.table_head)
-        mTableBody = rootView.findViewById(R.id.table_body)
+//        mTableBody = rootView.findViewById(R.id.table_body)
+        pager = rootView.findViewById(R.id.pager)
         mLayoutBtnGroupMonth = rootView.findViewById(R.id.layout_btn_group_month)
         mLayoutBtnGroupWeek = rootView.findViewById(R.id.layout_btn_group_week)
         mBtnPrevMonth = rootView.findViewById(R.id.btn_prev_month)
@@ -325,6 +333,9 @@ abstract class UICalendar constructor(context: Context, attrs: AttributeSet? = n
         this.mExpandIconColor = color
         expandIconView.setColor(color)
     }
+
+
+
 
     abstract fun changeToToday()
 
